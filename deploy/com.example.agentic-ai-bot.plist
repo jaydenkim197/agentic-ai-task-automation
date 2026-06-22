@@ -8,7 +8,21 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/YOUR_USERNAME/PATH_TO_PROJECT/.venv/bin/python</string>
+    <string>/usr/bin/open</string>
+    <string>-W</string>
+    <string>-n</string>
+    <string>-g</string>
+    <string>-a</string>
+    <string>/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Resources/Python.app</string>
+    <string>--stdout</string>
+    <string>/Users/YOUR_USERNAME/PATH_TO_PROJECT/logs/bot.stdout.log</string>
+    <string>--stderr</string>
+    <string>/Users/YOUR_USERNAME/PATH_TO_PROJECT/logs/bot.stderr.log</string>
+    <string>--env</string>
+    <string>PYTHONPATH=/Users/YOUR_USERNAME/PATH_TO_PROJECT/.venv/lib/python3.9/site-packages</string>
+    <string>--env</string>
+    <string>PYTHONPYCACHEPREFIX=/private/tmp/agentic-ai-pycache</string>
+    <string>--args</string>
     <string>/Users/YOUR_USERNAME/PATH_TO_PROJECT/main.py</string>
   </array>
 
@@ -23,9 +37,6 @@
 
   <key>ThrottleInterval</key>
   <integer>10</integer>
-
-  <key>ProcessType</key>
-  <string>Background</string>
 
   <key>EnvironmentVariables</key>
   <dict>

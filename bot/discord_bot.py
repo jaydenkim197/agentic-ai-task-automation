@@ -15,6 +15,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 def run_bot() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[logging.StreamHandler()],
+        force=True,
+    )
     settings = load_settings()
     controller = AgentController(settings)
     intents = discord.Intents.default()
@@ -86,10 +92,6 @@ def run_bot() -> None:
         for chunk in _discord_chunks(response):
             await message.channel.send(chunk)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
     client.run(settings.discord_bot_token, log_handler=None)
 
 

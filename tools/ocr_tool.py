@@ -50,6 +50,10 @@ class OCRInputError(RuntimeError):
     pass
 
 
+class OCRIndexAccessError(RuntimeError):
+    pass
+
+
 class OCRTool:
     def __init__(
         self,
@@ -73,8 +77,11 @@ class OCRTool:
     def refresh_index(self) -> list[Path]:
         """Index filenames without stat'ing every OneDrive cloud placeholder."""
         pdfs: list[Path] = []
+        walk_errors: list[OSError] = []
         root_depth = len(self.root.parts)
-        for current, directories, filenames in os.walk(self.root):
+        for current, directories, filenames in os.walk(
+            self.root, onerror=walk_errors.append
+        ):
             current_path = Path(current)
             depth = len(current_path.parts) - root_depth
             directories[:] = [
@@ -85,6 +92,35 @@ class OCRTool:
             for filename in filenames:
                 if filename.lower().endswith(".pdf"):
                     pdfs.append(ensure_within_root(current_path / filename, self.root))
+        if walk_errors:
+            LOGGER.error(
+                "OCR root traversal failed: root=%s error=%s",
+                self.root,
+                walk_errors[0],
+            )
+            raise OCRIndexAccessError(
+                "The background bot cannot read the configured OneDrive folder. "
+                "Grant its Python process macOS file access, then restart the bot."
+            )
+        if not pdfs:
+            try:
+                entries = list(self.root.iterdir())
+            except OSError as exc:
+                LOGGER.exception("OCR root listing failed: root=%s", self.root)
+                raise OCRIndexAccessError(
+                    "The background bot cannot read the configured OneDrive folder. "
+                    "Grant its Python process macOS file access, then restart the bot."
+                ) from exc
+            if entries:
+                LOGGER.error(
+                    "OCR traversal returned no PDFs from a non-empty root: root=%s",
+                    self.root,
+                )
+                raise OCRIndexAccessError(
+                    "The background bot can see the OneDrive root but cannot traverse "
+                    "its contents. Grant its Python process macOS file access, then "
+                    "restart the bot."
+                )
         self._pdf_index = sorted(pdfs)
         return self._pdf_index
 

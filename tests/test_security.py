@@ -9,7 +9,7 @@ from security.guards import (
     ensure_within_root,
     safe_output_path,
 )
-from tools.ocr_tool import OCRInputError, OCRTool
+from tools.ocr_tool import OCRIndexAccessError, OCRInputError, OCRTool
 
 
 def test_only_owner_is_allowed():
@@ -75,6 +75,20 @@ def test_pdf_search_refreshes_even_when_stale_index_has_similar_matches(
     candidates = tool.find_candidates("robotics week11")
 
     assert candidates[0].path.name == "robotics_week11.pdf"
+
+
+def test_nonempty_inaccessible_style_root_is_not_reported_as_no_match(
+    tmp_path: Path, monkeypatch
+):
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "visible-folder").mkdir()
+    tool = OCRTool(None, "unused", root, 20, 160, 5, 2)
+
+    monkeypatch.setattr("tools.ocr_tool.os.walk", lambda *args, **kwargs: [])
+
+    with pytest.raises(OCRIndexAccessError):
+        tool.find_candidates("lecture")
 
 
 def test_unreadable_pdf_fails_without_creating_output(tmp_path: Path):
