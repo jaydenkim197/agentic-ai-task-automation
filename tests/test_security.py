@@ -62,6 +62,21 @@ def test_pdf_search_refreshes_stale_index_after_no_match(tmp_path: Path):
     assert [item.path.name for item in candidates] == ["robotics_week10.pdf"]
 
 
+def test_pdf_search_refreshes_even_when_stale_index_has_similar_matches(
+    tmp_path: Path,
+):
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "robotics_week1.pdf").touch()
+    tool = OCRTool(None, "unused", root, 20, 160, 5, 2)
+    tool.refresh_index()
+
+    (root / "robotics_week11.pdf").touch()
+    candidates = tool.find_candidates("robotics week11")
+
+    assert candidates[0].path.name == "robotics_week11.pdf"
+
+
 def test_unreadable_pdf_fails_without_creating_output(tmp_path: Path):
     root = tmp_path / "root"
     root.mkdir()

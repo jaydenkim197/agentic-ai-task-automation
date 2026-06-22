@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 import os
 import unicodedata
 from dataclasses import dataclass
@@ -12,6 +13,9 @@ from openai import OpenAI
 from rapidfuzz import fuzz
 
 from security.guards import atomic_write_new, ensure_within_root, safe_output_path
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 OCR_PROMPT = """
@@ -87,14 +91,17 @@ class OCRTool:
     def find_candidates(
         self, query: str | None, refresh: bool = False
     ) -> list[PDFCandidate]:
-        if refresh or self._pdf_index is None:
-            self.refresh_index()
+        # OneDrive contents may change at any time while this process remains
+        # alive. Rebuilding this filename-only index is cheap and prevents a
+        # long-running bot from serving stale search results.
+        self.refresh_index()
         candidates = self._rank_candidates(query)
-        if not candidates and not refresh:
-            # OneDrive contents can change while the always-on bot is running.
-            # Retry once with a fresh index before reporting that no file exists.
-            self.refresh_index()
-            candidates = self._rank_candidates(query)
+        LOGGER.info(
+            "OCR PDF search completed: indexed=%s candidates=%s query_length=%s",
+            len(self._pdf_index or []),
+            len(candidates),
+            len(query or ""),
+        )
         return candidates
 
     def _rank_candidates(self, query: str | None) -> list[PDFCandidate]:
