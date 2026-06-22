@@ -50,6 +50,18 @@ def test_pdf_index_respects_depth_and_extension(tmp_path: Path):
     assert [item.path.name for item in candidates] == ["lecture.pdf"]
 
 
+def test_pdf_search_refreshes_stale_index_after_no_match(tmp_path: Path):
+    root = tmp_path / "root"
+    root.mkdir()
+    tool = OCRTool(None, "unused", root, 20, 160, 5, 2)
+
+    assert tool.find_candidates("robotics") == []
+    (root / "robotics_week10.pdf").touch()
+
+    candidates = tool.find_candidates("robotics week10")
+    assert [item.path.name for item in candidates] == ["robotics_week10.pdf"]
+
+
 def test_unreadable_pdf_fails_without_creating_output(tmp_path: Path):
     root = tmp_path / "root"
     root.mkdir()

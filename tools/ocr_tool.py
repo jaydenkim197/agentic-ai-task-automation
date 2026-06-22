@@ -89,6 +89,15 @@ class OCRTool:
     ) -> list[PDFCandidate]:
         if refresh or self._pdf_index is None:
             self.refresh_index()
+        candidates = self._rank_candidates(query)
+        if not candidates and not refresh:
+            # OneDrive contents can change while the always-on bot is running.
+            # Retry once with a fresh index before reporting that no file exists.
+            self.refresh_index()
+            candidates = self._rank_candidates(query)
+        return candidates
+
+    def _rank_candidates(self, query: str | None) -> list[PDFCandidate]:
         pdfs = self._pdf_index or []
         if not query:
             return [PDFCandidate(path=p, score=0) for p in sorted(pdfs)][
