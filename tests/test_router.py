@@ -11,6 +11,16 @@ def test_deterministic_ocr_route_and_range():
     assert "modern control systems" in command.file_query
 
 
+def test_filename_numbers_are_not_treated_as_page_range():
+    command = CommandRouter._deterministic_parse(
+        "OCR 11-1_Convolution & Transfer function.pdf"
+    )
+    assert command.intent == "ocr"
+    assert command.page_start is None
+    assert command.page_end is None
+    assert "11-1" in command.file_query
+
+
 def test_help_route():
     assert CommandRouter._deterministic_parse("help").intent == "help"
 

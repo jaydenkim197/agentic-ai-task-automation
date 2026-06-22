@@ -100,3 +100,28 @@ def test_unreadable_pdf_fails_without_creating_output(tmp_path: Path):
     with pytest.raises(OCRInputError):
         tool.process(pdf)
     assert not (root / "placeholder_ag.txt").exists()
+
+
+def test_pdf_larger_than_batch_limit_is_processed_completely(
+    tmp_path: Path, monkeypatch
+):
+    import fitz
+
+    root = tmp_path / "root"
+    root.mkdir()
+    pdf = root / "long-lecture.pdf"
+    document = fitz.open()
+    for _ in range(21):
+        document.new_page()
+    document.save(pdf)
+    document.close()
+
+    tool = OCRTool(None, "unused", root, 20, 72, 5, 2)
+    monkeypatch.setattr(tool, "_render_page", lambda page: b"image")
+    monkeypatch.setattr(tool, "_transcribe_page", lambda image: "page text")
+
+    result = tool.process(pdf)
+
+    assert result.pages_processed == 21
+    assert result.output.name == "long-lecture_ag.txt"
+    assert result.output.read_text().count("--- Page ") == 21

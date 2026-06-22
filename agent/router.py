@@ -51,10 +51,29 @@ class CommandRouter:
         text = message.strip()
         lowered = text.lower()
         page_match = re.search(
-            r"(?:pages?\s*)?(\d+)\s*(?:-|~|to|through)\s*(\d+)", lowered
+            r"\bpages?\s*(\d+)\s*(?:-|~|to|through)\s*(\d+)\b"
+            r"|\b(\d+)\s*(?:-|~|to|through)\s*(\d+)\s*pages?\b"
+            r"|(\d+)\s*(?:-|~|부터)\s*(\d+)\s*페이지",
+            lowered,
         )
-        page_start = int(page_match.group(1)) if page_match else None
-        page_end = int(page_match.group(2)) if page_match else None
+        page_numbers = (
+            next(
+                (
+                    pair
+                    for pair in (
+                        page_match.group(1, 2),
+                        page_match.group(3, 4),
+                        page_match.group(5, 6),
+                    )
+                    if all(pair)
+                ),
+                None,
+            )
+            if page_match
+            else None
+        )
+        page_start = int(page_numbers[0]) if page_numbers else None
+        page_end = int(page_numbers[1]) if page_numbers else None
 
         if re.search(r"\b(ocr|pdf|textify|extract text)\b", lowered):
             query = re.sub(
@@ -63,7 +82,8 @@ class CommandRouter:
                 text,
                 flags=re.IGNORECASE,
             )
-            query = re.sub(r"\d+\s*(?:-|~|to|through)\s*\d+", " ", query)
+            if page_match:
+                query = query.replace(page_match.group(0), " ")
             query = re.sub(r"\s+", " ", query).strip(" .")
             return AgentCommand(
                 intent="ocr",

@@ -195,11 +195,6 @@ class OCRTool:
             end = min(page_end or total, total)
             if start < 0 or start >= total or end <= start:
                 raise ValueError(f"Invalid page range for a {total}-page PDF.")
-            if end - start > self.max_pages:
-                raise ValueError(
-                    f"Requested {end - start} pages; the configured limit is "
-                    f"{self.max_pages} pages per run."
-                )
 
             sections = [
                 "# OCR TRANSCRIPTION",
@@ -208,12 +203,21 @@ class OCRTool:
                 "Format: UTF-8, LaTeX math, Markdown tables, figure descriptions",
                 "",
             ]
-            for page_index in range(start, end):
-                image = self._render_page(document[page_index])
-                text = self._transcribe_page(image)
-                sections.extend(
-                    [f"--- Page {page_index + 1} ---", "", text.strip(), ""]
+            for batch_start in range(start, end, self.max_pages):
+                batch_end = min(batch_start + self.max_pages, end)
+                LOGGER.info(
+                    "OCR batch started: source=%s pages=%s-%s total=%s",
+                    source.name,
+                    batch_start + 1,
+                    batch_end,
+                    total,
                 )
+                for page_index in range(batch_start, batch_end):
+                    image = self._render_page(document[page_index])
+                    text = self._transcribe_page(image)
+                    sections.extend(
+                        [f"--- Page {page_index + 1} ---", "", text.strip(), ""]
+                    )
 
         atomic_write_new(output, "\n".join(sections).rstrip() + "\n", self.root)
         return OCRResult(
