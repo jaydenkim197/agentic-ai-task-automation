@@ -4,6 +4,22 @@ A lightweight Python implementation of a personal task-automation agent inspired
 by the Agentic AI concept demonstrated by OpenClaw. This project does **not**
 install or use OpenClaw.
 
+> **Portfolio project:** a single-user AI automation system that turns Korean or
+> English natural-language requests into tightly scoped, auditable workflows.
+> GPT is used for interpretation, OCR, classification, and drafting; deterministic
+> Python guards retain control over file access and external actions.
+
+![System architecture](scripts/report/assets/system_architecture.png)
+
+## AI in use
+
+The model never receives unrestricted machine access. It produces a validated intent
+or content transformation, while the controller enforces an owner-only Discord
+boundary, a configured OneDrive root, fixed tool choices, and explicit email-send
+approval. Untrusted PDF, email, Sheet, and Calendar text is isolated before it is
+included in a model request. This keeps the LLM useful for natural-language work
+without allowing it to become an arbitrary command executor.
+
 The bot accepts English or Korean natural-language requests through Discord and
 invokes only explicitly allowlisted tools.
 
@@ -70,7 +86,8 @@ Discord attachments are rejected; files are exchanged only through OneDrive.
 
 ## Setup
 
-Requires Python 3.9 or newer.
+Requires Python 3.9 or newer. Python 3.10 or newer is recommended because current
+Google client libraries are ending feature support for Python 3.9.
 
 ```bash
 python3 -m venv .venv
@@ -165,7 +182,8 @@ Format: UTF-8, LaTeX math, Markdown tables, figure descriptions
 
 ## Cost and demonstration controls
 
-- `OCR_MAX_PAGES_PER_RUN=20` prevents accidental large OCR jobs.
+- `OCR_MAX_PAGES_PER_RUN=20` is the per-batch OCR limit. Longer PDFs are processed
+  safely in batches, while a requested page range can keep a demonstration short.
 - `OCR_SEARCH_MAX_DEPTH=4` avoids expensive traversal of unrelated deep
   OneDrive trees.
 - Use a small page range for the under-one-minute demonstration.
@@ -180,3 +198,10 @@ pytest -q
 
 The tests cover owner restriction, filesystem escape prevention, `_ag.txt`
 naming, atomic no-overwrite behavior, and task completion filtering.
+
+## Project evidence
+
+- [Final report PDF](docs/final-report/Final%20Report%20-%20Agentic%20AI-Based%20Task%20Automation%20System.pdf)
+- [Final report DOCX](docs/final-report/Final%20Report%20-%20Agentic%20AI-Based%20Task%20Automation%20System.docx)
+- [Original project proposal](docs/proposal/Proposal%20for%20Agentic%20AI-Based%20Task%20Automation%20System.docx)
+- [Implementation specification](docs/IMPLEMENTATION_SPEC.md)
